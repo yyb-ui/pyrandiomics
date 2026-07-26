@@ -1,12 +1,7 @@
-🧬 医学影像组学实战分享：如何用纯 Python “手搓” 一个 PyRadiomics 库
-
-作者： [你的名字]
-分享场景： 智能医学工程课堂/项目组会
-适用项目： Tkinter 桌面端乳腺超声 AI 辅助诊断系统（避免依赖地狱的终极解决方案）
-
+#医学影像组学实战分享：如何用纯 Python “手搓” 一个 PyRadiomics 库
 ---
 
-🎯 一、 核心痛点与开发者心路历程
+##一、 核心痛点与开发者心路历程
 
 在开发医学影像组学（Radiomics）项目时，我们通常会遇到一个让人极其崩溃的循环：
 
@@ -18,7 +13,7 @@
 
 ---
 
-🔍 二、 原理解密：为什么它能替代 PyRadiomics？
+##二、 原理解密：为什么它能替代 PyRadiomics？
 
 很多初学者害怕自己写特征提取函数，觉得肯定不如 C++ 写的 pyradiomics 准。这完全是误区。
 
@@ -35,7 +30,7 @@
 
 ---
 
-💻 三、 完整可运行的替代代码（请直接复制到项目中使用）
+##三、 完整可运行的替代代码（请直接复制到项目中使用）
 
 这段代码可以直接放在你的 breast_cancer_app/feature_extractor.py 里，直接替换掉你对 pyradiomics 的调用。它提取了 一阶统计、形状特征、GLCM 纹理 三大类，共近 30 个核心特征。
 
@@ -121,16 +116,5 @@ def extract_radiomics_features(img_path, mask_path):
 
     return feat
 ```
-
----
-
-📊 四、 替代方案速查表（课堂分享核心对比）
-
-特性 PyRadiomics (C++) 纯 Python 手写版
-底层语言 C++（需要 Visual Studio 编译环境） Python / NumPy
-提取速度 极快（非常适合 3D CT/MRI） 中等（但处理 2D 超声仅需几毫秒）
-错误处理 遇到小病灶直接闪退 自带 if len(roi) == 0 防御，跳过坏图
-安装难度 Windows 下地狱级（易摧毁整个 Conda） pip install scikit-image 一键搞定
-医学公式 遵循 IBSI 标准 完全复刻 IBSI 标准，结果一致
 
 ---
