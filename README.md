@@ -15,7 +15,7 @@
 
 ##二、 原理解密：为什么它能替代 PyRadiomics？
 
-很多初学者害怕自己写特征提取函数，觉得肯定不如 C++ 写的 pyradiomics 准。这完全是误区。
+*很多初学者害怕自己写特征提取函数，觉得肯定不如 C++ 写的 pyradiomics 准。这完全是误区。*
 
 1. 数学逻辑完全一样：
    · pyradiomics 算面积，底层靠的是 C++ 的几何公式。
@@ -116,5 +116,25 @@ def extract_radiomics_features(img_path, mask_path):
 
     return feat
 ```
+**核心函数解析**
 
+1. cv2.imread(..., cv2.IMREAD_GRAYSCALE)
+   · 作用：读取原始超声图和医生勾画的掩码图，强制转为灰度图（单通道）。因为医学影像组学不需要彩色，只依赖灰度值做纹理分析。
+   
+2. img[mask_binary > 0]（核心切片）
+   · 作用：这是 Python 结合 NumPy 极其高效的一行代码。它利用掩码（Mask 上大于 0 的地方），直接把原始图里“病灶区域”的像素值全部“抠”出来，存入 roi_pixels 一维数组里。后续所有计算都只针对这组像素，不再管背景。
+   
+3. np.mean(), np.var(), scipy.stats.skew()
+   · 作用：计算病灶区域的一阶统计特征。它们告诉你“肿瘤区域内部到底有多亮、灰度值波动大不大、分布偏不偏态”。偏态和峰度对于区分良恶性非常有临床参考价值。
+   
+4. skimage.measure.regionprops(mask_binary)[0]
+   · 作用：这是提取形状特征的关键工具。它能通过掩码直接帮你算出病灶的 area（面积）、perimeter（周长）、major_axis_length（长轴）、minor_axis_length（短轴）。你代码里的 sh_aspect_ratio（长宽比）就是用它算的。
+   
+6. skimage.feature.graycomatrix()
+   · 作用：构建 GLCM（灰度共生矩阵）。它将病灶区域量化成 32 个灰度等级，计算在 4 个方向（0度、45度、90度、135度）上，相邻像素点同时出现的频率。
+   
+7. skimage.feature.graycoprops(glcm, p)
+   · 作用：基于刚才算出的共生矩阵，提取 6 种经典纹理指标：contrast（对比度）、dissimilarity（相异性）、homogeneity（同质性）、energy（能量）、correlation（相关性）、ASM（角二阶矩）。
+   · 工程细节：代码里之所以要算四个方向后取 np.mean 和 np.std，是因为肿瘤在图像里可能是任意旋转角度的，算完再求均值能保证特征具有旋转不变性。
+   
 ---
