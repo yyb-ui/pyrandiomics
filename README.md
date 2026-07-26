@@ -32,7 +32,7 @@
 
 ##三、 完整可运行的替代代码（请直接复制到项目中使用）
 
-这段代码可以直接放在你的 breast_cancer_app/feature_extractor.py 里，直接替换掉你对 pyradiomics 的调用。它提取了 一阶统计、形状特征、GLCM 纹理 三大类，共近 30 个核心特征。
+这段代码可以直接替换掉对 pyradiomics 的调用。它提取了 一阶统计、形状特征、GLCM 纹理 三大类，共近 30 个核心特征。
 
 ```python
 import numpy as np
