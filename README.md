@@ -138,3 +138,47 @@ def extract_radiomics_features(img_path, mask_path):
    · 工程细节：代码里之所以要算四个方向后取 np.mean 和 np.std，是因为肿瘤在图像里可能是任意旋转角度的，算完再求均值能保证特征具有旋转不变性。
    
 ---
+
+# 四、那要是遇到维数灾难怎么办？
+
+下面这段代码可以通过高相关性分析筛选降维
+
+```python
+from sklearn.feature_selection import VarianceThreshold
+import numpy as np
+import pandas as pd
+
+# 假设你的手写提取器已经产出了特征表 feature_df (行是样本，列是特征)
+X = feature_df.values
+y = feature_df['label'].values
+
+# ==================== 第一步：零方差过滤 ====================
+# 移除那些几乎所有样本都一样的常数特征（比如很多病灶都没有某个纹理）
+var_thresh = VarianceThreshold(threshold=0.0)  # 阈值为 0 代表只要有一丁点变化就保留
+X_clean = var_thresh.fit_transform(X)
+
+# ==================== 第二步：高相关性去重（实现“聚类降维”） ====================
+def remove_high_correlation(X, threshold=0.9):
+    """计算相关系数矩阵，剔除高度相关的冗余特征"""
+    corr_matrix = np.corrcoef(X.T)
+    to_drop = set()
+    for i in range(len(corr_matrix)):
+        for j in range(i + 1, len(corr_matrix)):
+            if abs(corr_matrix[i, j]) > threshold:
+                to_drop.add(j)  # 如果特征 i 和 j 相关 > 0.9，把后面那个特征 j 删掉
+    keep_idx = [i for i in range(len(corr_matrix)) if i not in to_drop]
+    return X[:, keep_idx], keep_idx
+
+X_final, keep_idx = remove_high_correlation(X_clean, threshold=0.9)
+
+print(f"原始特征数: {X.shape[1]}")
+print(f"降维后特征数: {X_final.shape[1]}")
+```
+
+**为何能替代purandiomics里的筛选功能？**
+
+*这个功能在 pyradiomics 里是底层是怎么运作的？*
+
+**本质上就做了两件事：**
+1. 方差过滤（VarianceThreshold）：把所有特征里，样本与样本之间数值几乎没有变化（方差接近0）的“废特征”直接扔掉。
+2. 相关性去重（Correlation Removal）：计算所有特征两两之间的皮尔逊相关系数。如果某两个特征的相关性超过了 0.9（或 0.95），系统就认为它们提供了同样的信息，自动把其中一个删掉。
